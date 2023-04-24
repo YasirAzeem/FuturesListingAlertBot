@@ -3,7 +3,7 @@ from app.settings import bybit_url
 
 import json
 import re
-import time
+
 from datetime import datetime
 
 def generate_url(data):
@@ -14,47 +14,51 @@ def generate_url(data):
     return f"{base_url}{slug}-{code}"
 
 
-def table_dict(table):
-    # Extract header names
-    header_cells = table.find_all('tr')[0].find_all('td')
-    header_names = [cell.get_text(strip=True) for cell in header_cells]
+def extract_symbol_and_launch_time(text: str):
+    symbol_pattern = r"(\w+USDT)"
+    date_pattern = r"([A-Za-z]+ \d{1,2}, \d{4}, at approximately \d{1,2}(?:AM|PM) UTC)"
 
-    # Extract data rows
-    data_rows = table.find_all('tr')[1:]
+    symbol_match = re.search(symbol_pattern, text)
+    date_match = re.search(date_pattern, text)
 
-    # Create a dictionary from the data rows
-    data = {}
-    for header_name in header_names:
-        data[header_name] = []
+    if not symbol_match or not date_match:
+        return None
 
-    for row in data_rows:
-        cells = row.find_all('td')
-        for i, cell in enumerate(cells):
-            data[header_names[i]].append(cell.get_text(strip=True))
-    output_data = []
-    for ky in list(data.keys())[1:]:
-        sym_dict = {}
-        sym_dict['symbol'] = ky
-        launch_time_dt = datetime.strptime(data[ky][0].strip(), "%Y-%m-%d %H:%M (UTC)")
-        sym_dict['timestamp'] =   1000*int(time.mktime(launch_time_dt.timetuple()))      
-        output_data.append(sym_dict)
-        
-    return output_data
+    symbol = symbol_match.group(1)
+    date_str = date_match.group(1)
+
+    launch_time = datetime.strptime(date_str, "%b %d, %Y, at approximately %I%p UTC").timestamp()*1000
+
+    return {"symbol": symbol, "launch_time": int(launch_time)}
+
+def data_dict(soup):
+    details = soup.find(id="article-detail-content")
+    if details:
+        details = details.find('p').text
+
+        return [extract_symbol_and_launch_time(details)]
+    else:
+        return None
+    
 
 
 
-def scrape_binance():
+def scrape_bybit():
     listings = []
     req_handler = RequestHandler()
     soup = req_handler.get_soup(bybit_url)
     articles = json.loads(soup.find(id="__NEXT_DATA__").text)['props']['pageProps']['articleInitEntity']['list']
-    
-    articles = json.loads(soup.find(id="__APP_DATA").text)['routeProps']['ce50']['catalogs'][0]['articles']
-    articles = [x for x in articles if "Binance Futures Will Launch USDT-Margined" in x['title']]
+    articles = [x for x in articles if ("USDT Perpetual Contracts" in x['title']) and ("Coming Soon" in x['title'])]
     for art in articles:
-        url = generate_url(art)
+        url = f"https://announcements.bybit.com/en-US{art['url']}"
         soup2 = req_handler.get_soup(url)
-        table = soup2.find('table')
-        listing_data = table_dict(table)
-        listings.extend(listing_data)
+        title = soup2.find('title').text.strip()
+        
+        listing_data = data_dict(soup2)
+        if listing_data:
+            listing_data["message"] = title
+            listing_data["url"] = url
+            listings.extend(listing_data)
+        else:
+            continue
     return listings

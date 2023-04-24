@@ -1,4 +1,5 @@
 from exchange_scrapers.binance_futures import scrape_binance
+from exchange_scrapers.bybit_futures import scrape_bybit
 from db_helpers import add_listing
 
 def binance():
@@ -8,7 +9,10 @@ def binance():
     return
 
 def scrape_bybit():
-    # Scrape Bybit listings and store them in the database
+    listings = scrape_bybit()
+    for listing in listings:
+        add_listing(exchange="Bybit Futures",symbol=listing['symbol'], launch_time=listing['timestamp'])
+    return
+    
+def scrape_okx():
     pass
-
-# Implement similar functions for other exchanges
