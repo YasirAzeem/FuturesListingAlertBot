@@ -1,3 +1,7 @@
-TELEGRAM_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+TELEGRAM_TOKEN = "5840831088:AAGdcnjwu_l2VOs_67yCA0O7ZTqsKlcx5bo"
+CHAT_ID = "1355285614"
 binance_url = "https://www.binance.com/en/support/announcement/new-cryptocurrency-listing?c=48&navId=48"
 bybit_url = "https://announcements.bybit.com/en-US/?category=new_crypto&page=1"
+bitget_url = "https://www.bitget.com/en/support/sections/12508313405000"
+mexc_url = "https://www.mexc.com/help/announce/api/new/en-US/section/360000547811/articles?page=1&per_page=30"
+okx_url = "https://www.okx.com/support/hc/en-us/sections/360009318571-Derivatives"

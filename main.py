@@ -1,4 +1,5 @@
-from app.telegram_bot import send_reminders
+from app.telegram_bot import dp, on_startup, on_shutdown
+from aiogram import executor
 
 if __name__ == "__main__":
-    send_reminders()
+    executor.start_polling(dp, on_startup=on_startup, on_shutdown=on_shutdown)

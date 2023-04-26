@@ -14,7 +14,7 @@ def generate_url(data):
     return f"{base_url}{slug}-{code}"
 
 
-def table_dict(table):
+def table_dict(table, title, url):
     # Extract header names
     header_cells = table.find_all('tr')[0].find_all('td')
     header_names = [cell.get_text(strip=True) for cell in header_cells]
@@ -36,14 +36,16 @@ def table_dict(table):
         sym_dict = {}
         sym_dict['symbol'] = ky
         launch_time_dt = datetime.strptime(data[ky][0].strip(), "%Y-%m-%d %H:%M (UTC)")
-        sym_dict['timestamp'] =   1000*int(time.mktime(launch_time_dt.timetuple()))      
+        sym_dict['launch_time'] =   1000*int(time.mktime(launch_time_dt.timetuple()))
+        sym_dict["message"] = title
+        sym_dict["url"] = url      
         output_data.append(sym_dict)
         
     return output_data
 
 
 
-def scrape_binance():
+def scrape_binance(messages):
     listings = []
     req_handler = RequestHandler()
     soup = req_handler.get_soup(binance_url)
@@ -52,14 +54,12 @@ def scrape_binance():
     for cat in catalogs:
         articles.extend(cat['articles'])
     articles = json.loads(soup.find(id="__APP_DATA").text)['routeProps']['ce50']['catalogs'][0]['articles']
-    articles = [x for x in articles if "Binance Futures Will Launch USDT-Margined" in x['title']]
+    articles = [x for x in articles if ("Binance Futures Will Launch USDT-Margined" in x['title']) and (x['title'] not in messages)]
     for art in articles:
         url = generate_url(art)
         soup2 = req_handler.get_soup(url)
         title = soup2.find('title').text.strip()
         table = soup2.find('table')
-        listing_data = table_dict(table)
-        listing_data["message"] = title
-        listing_data["url"] = url
+        listing_data = table_dict(table, title, url)
         listings.extend(listing_data)
     return listings

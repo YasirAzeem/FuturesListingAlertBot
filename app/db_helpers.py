@@ -19,3 +19,10 @@ def add_listing(exchange, symbol, launch_time, message, url):
 
     # Close the session
     session.close()
+
+
+
+def get_messages_by_exchange(exchange):
+    session = Session()
+    messages = session.query(Listing).filter(Listing.exchange == exchange).all()
+    return list(messages)

@@ -6,12 +6,6 @@ import re
 
 from datetime import datetime
 
-def generate_url(data):
-    base_url = "https://www.binance.com/en/support/announcement/"
-    slug = data['title'].lower().replace(" ", "-")
-    slug = re.sub(r"[^a-z0-9-]+", "", slug)  
-    code = data['code']
-    return f"{base_url}{slug}-{code}"
 
 
 def extract_symbol_and_launch_time(text: str):
@@ -43,12 +37,12 @@ def data_dict(soup):
 
 
 
-def scrape_bybit():
+def scrape_bybit(messages):
     listings = []
     req_handler = RequestHandler()
     soup = req_handler.get_soup(bybit_url)
     articles = json.loads(soup.find(id="__NEXT_DATA__").text)['props']['pageProps']['articleInitEntity']['list']
-    articles = [x for x in articles if ("USDT Perpetual Contracts" in x['title']) and ("Coming Soon" in x['title'])]
+    articles = [x for x in articles if (x['title'].strip() not in messages) and ("USDT Perpetual Contracts" in x['title']) and ("Coming Soon" in x['title'])]
     for art in articles:
         url = f"https://announcements.bybit.com/en-US{art['url']}"
         soup2 = req_handler.get_soup(url)
@@ -56,8 +50,8 @@ def scrape_bybit():
         
         listing_data = data_dict(soup2)
         if listing_data:
-            listing_data["message"] = title
-            listing_data["url"] = url
+            listing_data[0]["message"] = title
+            listing_data[0]["url"] = url
             listings.extend(listing_data)
         else:
             continue
