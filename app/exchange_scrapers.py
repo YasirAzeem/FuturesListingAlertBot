@@ -4,6 +4,7 @@ from exchange_scrapers.bitget_futures import scrape_bitget
 from exchange_scrapers.mexc_futures import scrape_mexc
 from exchange_scrapers.okx_futures import scrape_okx
 from app.db_helpers import add_listing, get_messages_by_exchange
+from helpers.logger_config import logger
 from asyncio import sleep
 
 
@@ -68,4 +69,5 @@ async def run_all():
             await okx()
         except Exception as e:
             print(f"Error in OKX Scraping: {e}")
+        logger.info("Fresh scrapes done and updated DB.")
         await sleep(15*60)
